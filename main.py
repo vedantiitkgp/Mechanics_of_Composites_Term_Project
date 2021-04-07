@@ -66,19 +66,19 @@ def effective_lamina_properties_angle(Q_matrix=False,S_matrix=False,Material_pro
     m = cos(angle)
     n = sin(angle)
     if Q_matrix == True:
-        Ex = 1/(pow(m,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[0][1]+2*data[2][2])+pow(n,4)*data[1][1])
+        data = inv(data)
+        Ex = 1/(pow(m,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
         nuxy = -Ex*(pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-data[2][2])+data[0][1]*(pow(m,4)+pow(n,4)))
-        Ey = 1/(pow(n,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[0][1]+2*data[2][2])+pow(m,4)*data[1][1]) 
-        Gxy = 1/4*pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2]
+        Ey = 1/(pow(n,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(m,4)*data[1][1]) 
+        Gxy = 1/(4*pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2])
         etaxy_x = Ex*(pow(m,3)*n*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(n,3)*m*(2*data[1][1]-2*data[0][1]-data[2][2]))
         etaxy_y = Ey*(pow(n,3)*m*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(m,3)*n*(2*data[1][1]-2*data[0][1]-data[2][2]))
     
     if S_matrix == True:
-        data = inv(data)
-        Ex = 1/(pow(m,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[0][1]+2*data[2][2])+pow(n,4)*data[1][1])
+        Ex = 1/(pow(m,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
         nuxy = -Ex*(pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-data[2][2])+data[0][1]*(pow(m,4)+pow(n,4)))
-        Ey = 1/(pow(n,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[0][1]+2*data[2][2])+pow(m,4)*data[1][1]) 
-        Gxy = 1/4*pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2]
+        Ey = 1/(pow(n,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(m,4)*data[1][1]) 
+        Gxy = 1/(4*pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2])
         etaxy_x = Ex*(pow(m,3)*n*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(n,3)*m*(2*data[1][1]-2*data[0][1]-data[2][2]))
         etaxy_y = Ey*(pow(n,3)*m*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(m,3)*n*(2*data[1][1]-2*data[0][1]-data[2][2]))
     
@@ -87,10 +87,27 @@ def effective_lamina_properties_angle(Q_matrix=False,S_matrix=False,Material_pro
         Ex = 1/(pow(m,4)/data[0]+2*pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(n,4)/data[2])
         nuxy = -Ex*(-1*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]-1/data[3])+(data[1]*(pow(m,4)+pow(n,4)))/data[0])
         Ey = 1/(pow(n,4)/data[0]+2*pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(m,4)/data[2])
-        Gxy = 1/4*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]+(2*data[1])/data[0])+(pow(pow(m,2)-pow(n,2),2))/data[3]
+        Gxy = 1/(4*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]+(2*data[1])/data[0])+(pow(pow(m,2)-pow(n,2),2))/data[3])
         etaxy_x = Ex*(pow(m,3)*n*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(n,3)*m*(2/data[2]+(2*data[1])/data[0]-1/data[3]))
         etaxy_y = Ey*(pow(n,3)*m*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(m,3)*n*(2/data[2]+(2*data[1])/data[0]-1/data[3]))
     return Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y
+
+def Stiffness_matrix_angle(data,angle):
+    Q_planar_angle = np.zeros((3,3),dtype=float)
+    m = cos(angle)
+    n = sin(angle)
+    Q_planar = stiffness_compliance_matrix(data[0],data[1]) ###(To be modified)
+    Q_planar_angle[0][0] = pow(m,4)*Q_planar[0][0]+2*pow(m,2)*pow(n,2)*(Q_planar[0][1]+2*Q_planar[2][2])+pow(n,4)*Q_planar[1][1]
+    Q_planar_angle[0][1] = pow(m,2)*pow(n,2)*(Q_planar[0][0]+Q_planar[1][1]-4*Q_planar[2][2])+Q_planar[0][1]*(pow(m,4)+pow(n,4))
+    Q_planar_angle[0][2] = pow(m,3)*n*(Q_planar[0][0]-Q_planar[0][1]-2*Q_planar[2][2])+pow(n,3)*m*(Q_planar[0][1]-Q_planar[1][1]+2*Q_planar[2][2])
+    Q_planar_angle[1][0] = Q_planar_angle[0][1]
+    Q_planar_angle[1][1] = pow(n,4)*Q_planar[0][0]+2*pow(m,2)*pow(n,2)*(Q_planar[0][1]+2*Q_planar[2][2])+pow(m,4)*Q_planar[1][1]
+    Q_planar_angle[1][2] = pow(n,3)*m*(Q_planar[0][0]-Q_planar[0][1]+2*Q_planar[2][2])-pow(n,3)*m*(Q_planar[0][1]-Q_planar[1][1]-2*Q_planar[2][2])
+    Q_planar_angle[2][0] = Q_planar_angle[0][2]
+    Q_planar_angle[2][1] = Q_planar_angle[1][2]
+    Q_planar_angle[2][2] = pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2]
+    return Q_planar_angle
+
 
 #### Sub routine 3 ####
 
