@@ -31,25 +31,29 @@ def effective_lamina_properties(E1_fibre,E2_fibre,nu12_fibre,nu23_fibre,G12_fibr
 ## Inputs -E1,E2,E3,nu12,nu13,nu23,G12,G13,G23
 ## Outputs - Q(3x3 Matrix), S(3x3 Matrix)   
 
-def stiffness_compliance_matrix(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23):
+def stiffness_compliance_matrix(E1=0,E2=0,E3=0,nu12=0,nu13=0,nu23=0,G12=0,G13=0,G23=0):
     S_matrix = np.zeros((6,6),dtype=float)
-    S_matrix[0][0] = 1/E1
-    S_matrix[0][1] = (-1*nu12)/E1
-    S_matrix[0][2] = (-1*nu13)/E1
-    S_matrix[1][0] = (-1*nu12)/E1
-    S_matrix[1][1] = 1/E2
-    S_matrix[1][2] = (-1*nu23)/E1
-    S_matrix[2][0] = (-1*nu13)/E1
-    S_matrix[2][1] = (-1*nu23)/E1
-    S_matrix[2][2] = 1/E3
-    S_matrix[3][3] = 1/G23
-    S_matrix[4][4] = 1/G13
-    S_matrix[5][5] = 1/G12
+    if(E1!=0): 
+        S_matrix[0][0] = 1/E1
+        S_matrix[0][1] = (-1*nu12)/E1
+        S_matrix[0][2] = (-1*nu13)/E1
+    S_matrix[1][0] = S_matrix[0][1] 
+    if(E2!=0): S_matrix[1][1] = 1/E2
+    if(E1!=0): S_matrix[1][2] = (-1*nu23)/E1
+    S_matrix[2][0] = S_matrix[0][2]
+    S_matrix[2][1] = S_matrix[1][2]
+    if(E3!=0): S_matrix[2][2] = 1/E3
+    if(G23!=0): S_matrix[3][3] = 1/G23
+    if(G13!=0): S_matrix[4][4] = 1/G13
+    if(G12!=0): S_matrix[5][5] = 1/G12
 
     nu21 = (nu12 * E2)/E1
     nu31 = (nu13 * E3)/E1
     nu32 = (nu23 * E3)/E2
-    Q_matrix = inv(S_matrix)
+    try:
+        Q_matrix = inv(S_matrix)
+    except:
+        pass
 
     S_planar = np.zeros((3,3),dtype=float)
     S_planar[0][0] = S_matrix[0][0]
@@ -61,11 +65,11 @@ def stiffness_compliance_matrix(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23):
     return Q_planar,S_planar
 
 #### Calculate the modulus and elastic propties at another angle ####
-## Inputs - Q_matrix(3X3 Matrix)/S_matrix(3X3 Matrix)/Material_Propties([E1,nu12,E2,G12])
+## Inputs - Q_matrix(3X3 Matrix)/S_matrix(3X3 Matrix)/Material_Properties([E1,nu12,E2,G12])
 ## Outputs - Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y
 def effective_lamina_properties_angle(Q_matrix=False,S_matrix=False,Material_properties=False,data=1,angle=0):
-    m = np.cos(angle)
-    n = np.sin(angle)
+    m = np.cos(np.deg2rad(angle))
+    n = np.sin(np.deg2rad(angle))
     if Q_matrix == True:
         data = inv(data)
         Ex = 1/(pow(m,4)*data[0][0]+pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
@@ -85,44 +89,72 @@ def effective_lamina_properties_angle(Q_matrix=False,S_matrix=False,Material_pro
     
     if Material_properties == True:
         Ex = 1/(pow(m,4)/data[0]+pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(n,4)/data[2])
-        nuxy = -Ex*(-1*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]-1/data[3])+(data[1]*(pow(m,4)+pow(n,4)))/data[0])
+        nuxy = Ex*(-1*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]-1/data[3])+(data[1]*(pow(m,4)+pow(n,4)))/data[0])
         Ey = 1/(pow(n,4)/data[0]+pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(m,4)/data[2])
         Gxy = 1/(4*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]+(2*data[1])/data[0])+(pow(pow(m,2)-pow(n,2),2))/data[3])
-        etaxy_x = Ex*(pow(m,3)*n*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(n,3)*m*(2/data[2]+(2*data[1])/data[0]-1/data[3]))
-        etaxy_y = Ey*(pow(n,3)*m*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(m,3)*n*(2/data[2]+(2*data[1])/data[0]-1/data[3]))
+        etaxy_x = abs(Ex*(pow(m,3)*n*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(n,3)*m*(2/data[2]+(2*data[1])/data[0]-1/data[3])))
+        etaxy_y = abs(Ey*(pow(n,3)*m*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(m,3)*n*(2/data[2]+(2*data[1])/data[0]-1/data[3])))
     return Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y
 
 ## Helper function 
 def plot_properties_angle(data,angle):
-    x = np.linspace(0,90,180)
+    x = np.linspace(0,90,90)
     print(x.shape)
     Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = effective_lamina_properties_angle(Material_properties=True,data=data,angle=x)
-    print(Ex.shape,nuxy.shape,Ey.shape,Gxy.shape,etaxy_x.shape,etaxy_y.shape)
-    fig = plt.figure(figsize=(40,20))
-    #plt.plot(x,Ex,color='red',label='Ex')
-    #plt.plot(x,Ey,color='blue',label='Ey')
-    plt.plot(x,Gxy,color='green',label='Gxy')
-    plt.plot(x,nuxy,color='yellow',label='nuxy')
-    #plt.plot(x,etaxy_x,color='magneta',label='etaxy_x')
-    plt.plot(x,etaxy_x,color='cyan',label='etaxy_y')
-    plt.xlabel('Angle')
-    plt.title('Lamina properties at Angle(theta)')
+    fig, axs = plt.subplots(3, 2)
+    fig.suptitle('Laminate properties with Angle(theta)',fontsize='xx-large',fontweight='bold')
+    axs[0,0].plot(x,Ex,color='red',label='Ex')
+    axs[0,0].set_title('Ex v/s angle')
+    axs[0,0].grid(color = 'green', linestyle = '--', linewidth = 0.4)
+    axs[0,0].legend()
+    axs[0,0].set(ylabel='Stress(GPa)')
+    axs[0,1].plot(x,Ey,color='blue',label='Ey')
+    axs[0,1].set_title('Ey v/s angle')
+    axs[0,1].grid(color = 'green', linestyle = '--', linewidth = 0.4)
+    axs[0,1].legend()
+    axs[0,1].set(ylabel='Stress(GPa)')
+    axs[1,0].plot(x,Gxy,color='green',label='Gxy')
+    axs[1,0].set_title('Gxy v/s angle')
+    axs[1,0].grid(color = 'green', linestyle = '--', linewidth = 0.4)
+    axs[1,0].legend()
+    axs[1,0].set(ylabel='Stress(GPa)')
+    axs[1,1].plot(x,nuxy,color='orange',label='nuxy')
+    axs[1,1].set_title('nuxy v/s angle')
+    axs[1,1].grid(color = 'green', linestyle = '--', linewidth = 0.4)
+    axs[1,1].legend()
+    axs[1,1].set(ylabel='Poisson ratio')
+    axs[2,0].plot(x,etaxy_x,color='magenta',label='etaxy-x')
+    axs[2,0].set_title('etaxy-x v/s angle')
+    axs[2,0].grid(color = 'green', linestyle = '--', linewidth = 0.4)
+    axs[2,0].legend()
+    axs[2,0].set(xlabel='angle(degrees)',ylabel='shear coupling ratio')
+    axs[2,1].plot(x,etaxy_y,color='cyan',label='etaxy-y')
+    axs[2,1].set_title('etaxy-y v/s angle')
+    axs[2,1].grid(color = 'green', linestyle = '--', linewidth = 0.4)
+    axs[2,1].legend()
+    axs[2,1].set(xlabel='angle(degrees)',ylabel='shear coupling ratio')
+    '''
+    for ax in fig.get_axes():
+        ax.label_outer()
+    '''
     Ex_ang,nuxy_ang,Ey_ang,Gxy_ang,etaxy_x_ang,etaxy_y_ang = effective_lamina_properties_angle(Material_properties=True,data=data,angle=angle) 
-    #plt.plot(angle,Ex_ang,'b*')
-    plt.plot(angle,nuxy_ang,'b*')
-    #plt.plot(angle,Ey_ang,'b*')
-    plt.plot(angle,Gxy_ang,'b*')
-    #plt.plot(angle,etaxy_x_ang,'b*')
-    #plt.plot(angle,etaxy_y_ang,'b*')
+    axs[0,0].plot(angle,Ex_ang,'bo')
+    axs[0,1].plot(angle,Ey_ang,'bo')
+    axs[1,0].plot(angle,Gxy_ang,'bo')
+    axs[1,1].plot(angle,nuxy_ang,'bo')
+    axs[2,0].plot(angle,etaxy_x_ang,'bo')
+    axs[2,1].plot(angle,etaxy_y_ang,'bo')
     plt.show()
-    plt.legend(['Simple line'])
     return fig
 
+#### Calculate of Stiffness Matrix at angle ####
+## Inputs - Material_Propties([E1,nu12,E2,G12]),Angle
+## Outputs - Q_planar_angle
 def Stiffness_matrix_angle(data,angle):
     Q_planar_angle = np.zeros((3,3),dtype=float)
-    m = cos(angle)
-    n = sin(angle)
-    Q_planar = stiffness_compliance_matrix(data[0],data[1]) ###(To be modified)
+    m = np.cos(np.deg2rad(angle))
+    n = np.sin(np.deg2rad(angle))
+    Q_planar,S_planar = stiffness_compliance_matrix(E1=data[0],E2=data[2],nu12=data[1],G12=data[3])
     Q_planar_angle[0][0] = pow(m,4)*Q_planar[0][0]+2*pow(m,2)*pow(n,2)*(Q_planar[0][1]+2*Q_planar[2][2])+pow(n,4)*Q_planar[1][1]
     Q_planar_angle[0][1] = pow(m,2)*pow(n,2)*(Q_planar[0][0]+Q_planar[1][1]-4*Q_planar[2][2])+Q_planar[0][1]*(pow(m,4)+pow(n,4))
     Q_planar_angle[0][2] = pow(m,3)*n*(Q_planar[0][0]-Q_planar[0][1]-2*Q_planar[2][2])+pow(n,3)*m*(Q_planar[0][1]-Q_planar[1][1]+2*Q_planar[2][2])
@@ -131,7 +163,7 @@ def Stiffness_matrix_angle(data,angle):
     Q_planar_angle[1][2] = pow(n,3)*m*(Q_planar[0][0]-Q_planar[0][1]+2*Q_planar[2][2])-pow(n,3)*m*(Q_planar[0][1]-Q_planar[1][1]-2*Q_planar[2][2])
     Q_planar_angle[2][0] = Q_planar_angle[0][2]
     Q_planar_angle[2][1] = Q_planar_angle[1][2]
-    Q_planar_angle[2][2] = pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2]
+    Q_planar_angle[2][2] = pow(m,2)*pow(n,2)*(Q_planar[0][0]+Q_planar[1][1]-2*Q_planar[0][1])+pow(pow(m,2)-pow(n,2),2)*Q_planar[2][2]
     return Q_planar_angle
 
 
@@ -177,7 +209,7 @@ def stress_lamina(A,B,D,z_laminas,Q_matrices,N,M):
     for i in range(len(z_laminas)):
         strain_laminas.append(strain_curvature_vector[:3]+z_laminas[i]*strain_curvature_vector[3:])
     for i in range(len(z_laminas)):
-        stress_laminas.append(np.dot(Q_matrices[i],stress_laminas[i]))
+        stress_laminas.append(np.dot(Q_matrices[i],strain_laminas[i]))
     return stress_laminas
 
 #### Sub routine 4 ####
@@ -187,29 +219,52 @@ def stress_lamina(A,B,D,z_laminas,Q_matrices,N,M):
 ## Output - True(if Failure occurs)/False(if Failure doesnt occurs)
 def hashin_failure(stress_lamina,X,X_,Y,Y_,S):
     result = True
+    safety_factor = 2
     ## Calculating for Fibre ##
     if stress_lamina[0]>0: #Tensile fibre failure
         if(pow(stress_lamina[0]/X,2)+pow(stress_lamina[2]/S,2)<1):
             result = result and False
         else:
             result = result and True
+        safety_factor = quadratic_solver_safety(pow(stress_lamina[0]/X,2)+pow(stress_lamina[2]/S,2),0,-1)
     else: #Compressive fibre failure
         if(pow(stress_lamina[0]/X_,2)<1):
             result = result and False
         else:
             result = result and True
+        safety_factor = quadratic_solver_safety(pow(stress_lamina[0]/X_,2),0,-1)
     ## Calculating for Matrix ##
     if stress_lamina[1]>0: #Matrix Tensile Failure
         if(pow(stress_lamina[1]/Y,2)+pow(stress_lamina[3]/S,2)<1):
             result = result and False
         else:
             result = result and True
+        safety_factor = min(safety_factor,quadratic_solver_safety(pow(stress_lamina[1]/Y,2)+pow(stress_lamina[3]/S,2),0,-1))
     else: #Matrix Compressive Failure
         if((pow(Y_/2*S,2)-1)*(stress_lamina[1]/Y_)+pow(stress_lamina[1]/4*S,2)+pow(stress_lamina[2]/S,2)<1):
             result = result and False
         else:
             result = result and True
-    return result 
+        safety_factor = min(safety_factor,quadratic_solver_safety(pow(stress_lamina[1]/4*S,2)+pow(stress_lamina[2]/S,2),(pow(Y_/2*S,2)-1)*(stress_lamina[1]/Y_),-1))
+    return result,safety_factor 
+
+## Helper function ##
+def quadratic_solver_safety(a,b,c):
+    # calculate the discriminant
+    d = (b**2) - (4*a*c)
+
+    # find two solutions
+    sol1 = (-b-sqrt(d))/(2*a)
+    sol2 = (-b+sqrt(d))/(2*a)
+    if(sol1>0 and sol2>0):
+        return min(sol1,sol2)
+    elif(sol1>0 or sol2>0):
+        if(sol1>0): return sol1
+        else: return sol2
+    else:
+        raise Exception("Quadratic coeffecients give illegal answers")
+
+
 
 if __name__ == "__main__":
     ### My composite properties ###
@@ -230,7 +285,14 @@ if __name__ == "__main__":
     #print(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
     Q_planar,S_planar = stiffness_compliance_matrix(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
     #print(Q_planar,S_planar)
-    #print(inv(Q_planar))
-    #Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = effective_lamina_properties_angle(Material_properties=True,data=[E1,nu12,E2,G12],angle=50)
-    fig = plot_properties_angle([E1,nu12,E2,G12],20)
+    Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = effective_lamina_properties_angle(Material_properties=True,data=[E1,nu12,E2,G12],angle=50)
+    #fig = plot_properties_angle([E1,nu12,E2,G12],20)
+    Q_planar_angle = Stiffness_matrix_angle(data=[E1,nu12,E2,G12],angle=20)
+    #print(Q_planar_angle)
+    A,B,D,z_laminas,Q_matrices = Laminate_parameters(data=[E1,nu12,E2,G12],laminate_sequence=[0,20,40,40,20,0],lamina_thickness=1)
+    #print(A,B,D,z_laminas,Q_matrices)
+    stress_laminas = stress_lamina(A,B,D,z_laminas,Q_matrices,N=[20,30,40],M=[40,50,60])
+    #print(stress_laminas)
+    result,safety_factor = hashin_failure(stress_laminas[0],X=10,X_=10,Y=20,Y_=20,S=10)
+    print(result,safety_factor)
 
