@@ -68,25 +68,25 @@ def effective_lamina_properties_angle(Q_matrix=False,S_matrix=False,Material_pro
     n = np.sin(angle)
     if Q_matrix == True:
         data = inv(data)
-        Ex = 1/(pow(m,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
+        Ex = 1/(pow(m,4)*data[0][0]+pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
         nuxy = Ex*(-pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-data[2][2])-data[0][1]*(pow(m,4)+pow(n,4)))
-        Ey = 1/(pow(n,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(m,4)*data[1][1]) 
+        Ey = 1/(pow(n,4)*data[0][0]+pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(m,4)*data[1][1]) 
         Gxy = 1/(4*pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2])
         etaxy_x = Ex*(pow(m,3)*n*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(n,3)*m*(2*data[1][1]-2*data[0][1]-data[2][2]))
         etaxy_y = Ey*(pow(n,3)*m*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(m,3)*n*(2*data[1][1]-2*data[0][1]-data[2][2]))
     
     if S_matrix == True:
-        Ex = 1/(pow(m,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
+        Ex = 1/(pow(m,4)*data[0][0]+pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(n,4)*data[1][1])
         nuxy = Ex*(-pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-data[2][2])-data[0][1]*(pow(m,4)+pow(n,4)))
-        Ey = 1/(pow(n,4)*data[0][0]+2*pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(m,4)*data[1][1]) 
+        Ey = 1/(pow(n,4)*data[0][0]+pow(m,2)*pow(n,2)*(data[2][2]+2*data[0][1])+pow(m,4)*data[1][1]) 
         Gxy = 1/(4*pow(m,2)*pow(n,2)*(data[0][0]+data[1][1]-2*data[0][1])+pow(pow(m,2)-pow(n,2),2)*data[2][2])
         etaxy_x = Ex*(pow(m,3)*n*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(n,3)*m*(2*data[1][1]-2*data[0][1]-data[2][2]))
         etaxy_y = Ey*(pow(n,3)*m*(2*data[0][0]-2*data[0][1]-data[2][2])-pow(m,3)*n*(2*data[1][1]-2*data[0][1]-data[2][2]))
     
     if Material_properties == True:
-        Ex = 1/(pow(m,4)/data[0]+2*pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(n,4)/data[2])
+        Ex = 1/(pow(m,4)/data[0]+pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(n,4)/data[2])
         nuxy = -Ex*(-1*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]-1/data[3])+(data[1]*(pow(m,4)+pow(n,4)))/data[0])
-        Ey = 1/(pow(n,4)/data[0]+2*pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(m,4)/data[2])
+        Ey = 1/(pow(n,4)/data[0]+pow(m,2)*pow(n,2)*(1/data[3]-(2*data[1])/data[0])+pow(m,4)/data[2])
         Gxy = 1/(4*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]+(2*data[1])/data[0])+(pow(pow(m,2)-pow(n,2),2))/data[3])
         etaxy_x = Ex*(pow(m,3)*n*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(n,3)*m*(2/data[2]+(2*data[1])/data[0]-1/data[3]))
         etaxy_y = Ey*(pow(n,3)*m*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(m,3)*n*(2/data[2]+(2*data[1])/data[0]-1/data[3]))
