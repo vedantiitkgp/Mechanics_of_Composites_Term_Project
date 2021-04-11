@@ -1,0 +1,13 @@
+Planar properties of Lamina at 0 degree 
+E1 : 118.036
+nu12 : 0.273
+E2 : 6.435
+G12 : 2.769
+Planar properties of Lamina at  20.0 degree 
+Ex : 21.95
+nuxy : 0.488
+Ey : 6.325
+Gxy : 3.552
+etaxy-x : 2.078
+etaxy-y : 0.001
+

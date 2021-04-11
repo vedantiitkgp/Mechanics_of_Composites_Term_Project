@@ -23,6 +23,7 @@ def effective_lamina_properties(E1_fibre,E2_fibre,nu12_fibre,nu23_fibre,G12_fibr
         G12 = (G12_fibre * G_matrix)/(G12_fibre*(1-sqrt(Volume_fraction_fibre))+G_matrix*sqrt(Volume_fraction_fibre))
         G13 = (G12_fibre * G_matrix)/(G12_fibre*(1-sqrt(Volume_fraction_fibre))+G_matrix*sqrt(Volume_fraction_fibre))
         G23 = (G23_fibre * G_matrix)/(G23_fibre*(1-sqrt(Volume_fraction_fibre))+G_matrix*sqrt(Volume_fraction_fibre)) 
+    E1,E2,E3,nu12,nu13,nu23,G12,G13,G23 = round(E1,3),round(E2,3),round(E3,3),round(nu12,3),round(nu13,3),round(nu23,3),round(G12,3),round(G13,3),round(G23,3)
     return E1,E2,E3,nu12,nu13,nu23,G12,G13,G23
 
 #### Sub routine 2 ####
@@ -62,6 +63,7 @@ def stiffness_compliance_matrix(E1=0,E2=0,E3=0,nu12=0,nu13=0,nu23=0,G12=0,G13=0,
     S_planar[1][1] = S_matrix[1][1]
     S_planar[2][2] = S_matrix[5][5]
     Q_planar = inv(S_planar)
+    Q_planar,S_planar = np.around(Q_planar,decimals = 3),np.around(S_planar,decimals = 3)
     return Q_planar,S_planar
 
 #### Calculate the modulus and elastic propties at another angle ####
@@ -94,12 +96,15 @@ def effective_lamina_properties_angle(Q_matrix=False,S_matrix=False,Material_pro
         Gxy = 1/(4*pow(m,2)*pow(n,2)*(1/data[0]+1/data[2]+(2*data[1])/data[0])+(pow(pow(m,2)-pow(n,2),2))/data[3])
         etaxy_x = abs(Ex*(pow(m,3)*n*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(n,3)*m*(2/data[2]+(2*data[1])/data[0]-1/data[3])))
         etaxy_y = abs(Ey*(pow(n,3)*m*(2/data[0]+(2*data[1])/data[0]-1/data[3])-pow(m,3)*n*(2/data[2]+(2*data[1])/data[0]-1/data[3])))
+    try:
+        Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = round(Ex,3),round(nuxy,3),round(Ey,3),round(Gxy,3),round(etaxy_x,3),round(etaxy_y,3)
+    except:
+        Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = np.around(Ex,3),np.round(nuxy,3),np.around(Ey,3),np.around(Gxy,3),np.around(etaxy_x,3),np.around(etaxy_y,3)
     return Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y
 
 ## Helper function 
-def plot_properties_angle(data,angle):
+def plot_properties_angle(data,angle=0):
     x = np.linspace(0,90,90)
-    print(x.shape)
     Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = effective_lamina_properties_angle(Material_properties=True,data=data,angle=x)
     fig, axs = plt.subplots(3, 2)
     fig.suptitle('Laminate properties with Angle(theta)',fontsize='xx-large',fontweight='bold')
@@ -145,6 +150,7 @@ def plot_properties_angle(data,angle):
     axs[2,0].plot(angle,etaxy_x_ang,'bo')
     axs[2,1].plot(angle,etaxy_y_ang,'bo')
     plt.show()
+    fig.savefig('lamina_variation_angle.jpg')
     return fig
 
 #### Calculate of Stiffness Matrix at angle ####
@@ -164,6 +170,7 @@ def Stiffness_matrix_angle(data,angle):
     Q_planar_angle[2][0] = Q_planar_angle[0][2]
     Q_planar_angle[2][1] = Q_planar_angle[1][2]
     Q_planar_angle[2][2] = pow(m,2)*pow(n,2)*(Q_planar[0][0]+Q_planar[1][1]-2*Q_planar[0][1])+pow(pow(m,2)-pow(n,2),2)*Q_planar[2][2]
+    Q_planar_angle = np.around(Q_planar_angle,decimals=3)
     return Q_planar_angle
 
 
@@ -173,10 +180,11 @@ def Stiffness_matrix_angle(data,angle):
 ## Inputs - material properties of 0 deg lamina, lamina_sequence,lamina_thickness
 ## Outputs - A,B,D
 
-def Laminate_parameters(data,laminate_sequence,lamina_thickness):
+def Laminate_parameters(data,laminate_sequence,lamina_thickness=1000):
     z_sequence = []
     Q_matrices = []
     no_laminas = len(laminate_sequence)
+    lamina_thickness = lamina_thickness/no_laminas
     for i in range(no_laminas):
         Q_matrices.append(Stiffness_matrix_angle(data,laminate_sequence[i]))
     z_sequence.append(-(no_laminas/2)*lamina_thickness)
@@ -194,23 +202,44 @@ def Laminate_parameters(data,laminate_sequence,lamina_thickness):
     z_laminas = []
     for i in range(no_laminas):
         z_laminas.append((z_sequence[i+1]+z_sequence[i])/2)
-    return A,B,D,z_laminas,Q_matrices
+    A,B,D = np.around(A,decimals=3),np.around(B,decimals=3),np.around(D,decimals=3)
+    return A,B,D,z_laminas,Q_matrices,laminate_sequence
 
 #### Calculation of stress vectors for each lamina 
 ## Inputs - A,B,D matrix of laminate ,N(Normal traction),M(Bending moment)   
 ## Oututs - Stress lamina (3*1 vector) for each lamina
 
-def stress_lamina(A,B,D,z_laminas,Q_matrices,N,M):
+def stress_lamina(A,B,D,z_laminas,Q_matrices,laminate_sequence,N,M):
     laminate_matrix = np.block([[A,B],[B,D]])
     traction_bending_vector = np.transpose(np.array([N[0],N[1],N[2],M[0],M[1],M[2]]))
     strain_curvature_vector = np.dot(inv(laminate_matrix),traction_bending_vector)
+    print(strain_curvature_vector)
     strain_laminas = []
     stress_laminas = []
     for i in range(len(z_laminas)):
         strain_laminas.append(strain_curvature_vector[:3]+z_laminas[i]*strain_curvature_vector[3:])
     for i in range(len(z_laminas)):
-        stress_laminas.append(np.dot(Q_matrices[i],strain_laminas[i]))
+        stress_laminas.append(angle_correction(np.dot(Q_matrices[i],strain_laminas[i]),laminate_sequence[i]))
     return stress_laminas
+
+#Helper Function
+def angle_correction(stress_xy,angle):
+    m = np.cos(np.deg2rad(angle))
+    n = np.sin(np.deg2rad(angle))
+    T = np.zeros((3,3),dtype=float)
+    T[0][0] = pow(m,2)
+    T[0][1] = pow(n,2)
+    T[0][2] = 2*m*n
+    T[1][0] = pow(n,2)
+    T[1][1] = pow(m,2)
+    T[1][2] = -2*m*n
+    T[2][0] = -m*n
+    T[2][1] = m*n
+    T[2][2] = pow(m,2)-pow(n,2)
+    stress_12 = np.dot(T,stress_xy)
+    return stress_12
+
+
 
 #### Sub routine 4 ####
 
@@ -235,17 +264,18 @@ def hashin_failure(stress_lamina,X,X_,Y,Y_,S):
         safety_factor = quadratic_solver_safety(pow(stress_lamina[0]/X_,2),0,-1)
     ## Calculating for Matrix ##
     if stress_lamina[1]>0: #Matrix Tensile Failure
-        if(pow(stress_lamina[1]/Y,2)+pow(stress_lamina[3]/S,2)<1):
+        if(pow(stress_lamina[1]/Y,2)+pow(stress_lamina[2]/S,2)<1):
             result = result and False
         else:
             result = result and True
-        safety_factor = min(safety_factor,quadratic_solver_safety(pow(stress_lamina[1]/Y,2)+pow(stress_lamina[3]/S,2),0,-1))
+        safety_factor = min(safety_factor,quadratic_solver_safety(pow(stress_lamina[1]/Y,2)+pow(stress_lamina[2]/S,2),0,-1))
     else: #Matrix Compressive Failure
         if((pow(Y_/2*S,2)-1)*(stress_lamina[1]/Y_)+pow(stress_lamina[1]/4*S,2)+pow(stress_lamina[2]/S,2)<1):
             result = result and False
         else:
             result = result and True
         safety_factor = min(safety_factor,quadratic_solver_safety(pow(stress_lamina[1]/4*S,2)+pow(stress_lamina[2]/S,2),(pow(Y_/2*S,2)-1)*(stress_lamina[1]/Y_),-1))
+    safety_factor = round(safety_factor,3)
     return result,safety_factor 
 
 ## Helper function ##
@@ -282,17 +312,19 @@ if __name__ == "__main__":
     G_matrix = E_matrix/(2*(1+nu_matrix))
     Volume_fraction_fibre = 0.516
     E1,E2,E3,nu12,nu13,nu23,G12,G13,G23 = effective_lamina_properties(E1_fibre,E2_fibre,nu12_fibre,nu23_fibre,G12_fibre,G23_fibre,E_matrix,nu_matrix,G_matrix,Volume_fraction_fibre)
-    #print(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
+    print(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
+    #print(G23_fibre,G_matrix)
     Q_planar,S_planar = stiffness_compliance_matrix(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
     #print(Q_planar,S_planar)
-    Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = effective_lamina_properties_angle(Material_properties=True,data=[E1,nu12,E2,G12],angle=50)
+    #Ex,nuxy,Ey,Gxy,etaxy_x,etaxy_y = effective_lamina_properties_angle(Material_properties=True,data=[E1,nu12,E2,G12],angle=50)
     #fig = plot_properties_angle([E1,nu12,E2,G12],20)
-    Q_planar_angle = Stiffness_matrix_angle(data=[E1,nu12,E2,G12],angle=20)
+    #Q_planar_angle = Stiffness_matrix_angle(data=[E1,nu12,E2,G12],angle=90)
     #print(Q_planar_angle)
-    A,B,D,z_laminas,Q_matrices = Laminate_parameters(data=[E1,nu12,E2,G12],laminate_sequence=[0,20,40,40,20,0],lamina_thickness=1)
+    A,B,D,z_laminas,Q_matrices,laminate_seq = Laminate_parameters(data=[E1,nu12,E2,G12],laminate_sequence=[0,29,-29,90,90,-29,29,0],lamina_thickness=1000)
     #print(A,B,D,z_laminas,Q_matrices)
-    stress_laminas = stress_lamina(A,B,D,z_laminas,Q_matrices,N=[20,30,40],M=[40,50,60])
-    #print(stress_laminas)
-    result,safety_factor = hashin_failure(stress_laminas[0],X=10,X_=10,Y=20,Y_=20,S=10)
+    #print(D)
+    stress_laminas = stress_lamina(A,B,D,z_laminas,Q_matrices,laminate_seq,N=[100000,0,0],M=[0,0,0])
+    print(stress_laminas[0])
+    result,safety_factor = hashin_failure(stress_laminas[0],X=1550,X_=1550,Y=150,Y_=220,S=93)
     print(result,safety_factor)
 
