@@ -2,6 +2,7 @@ from math import sqrt,cos,sin
 import numpy as np
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
+
 #### Sub routine 1 ####
 
 ##### Calculating effective properties of unidirectional composite lamina ####
@@ -312,7 +313,7 @@ if __name__ == "__main__":
     G_matrix = E_matrix/(2*(1+nu_matrix))
     Volume_fraction_fibre = 0.516
     E1,E2,E3,nu12,nu13,nu23,G12,G13,G23 = effective_lamina_properties(E1_fibre,E2_fibre,nu12_fibre,nu23_fibre,G12_fibre,G23_fibre,E_matrix,nu_matrix,G_matrix,Volume_fraction_fibre)
-    print(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
+    #print(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
     #print(G23_fibre,G_matrix)
     Q_planar,S_planar = stiffness_compliance_matrix(E1,E2,E3,nu12,nu13,nu23,G12,G13,G23)
     #print(Q_planar,S_planar)
@@ -321,10 +322,11 @@ if __name__ == "__main__":
     #Q_planar_angle = Stiffness_matrix_angle(data=[E1,nu12,E2,G12],angle=90)
     #print(Q_planar_angle)
     A,B,D,z_laminas,Q_matrices,laminate_seq = Laminate_parameters(data=[E1,nu12,E2,G12],laminate_sequence=[0,29,-29,90,90,-29,29,0],lamina_thickness=1000)
+    print(D)
     #print(A,B,D,z_laminas,Q_matrices)
     #print(D)
     stress_laminas = stress_lamina(A,B,D,z_laminas,Q_matrices,laminate_seq,N=[100000,0,0],M=[0,0,0])
-    print(stress_laminas[0])
+    #print(stress_laminas[0])
     result,safety_factor = hashin_failure(stress_laminas[0],X=1550,X_=1550,Y=150,Y_=220,S=93)
-    print(result,safety_factor)
+    #print(result,safety_factor)
 
