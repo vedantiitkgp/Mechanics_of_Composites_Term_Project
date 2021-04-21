@@ -1,3 +1,5 @@
+![MIT License](https://img.shields.io/apm/l/vim-mode?style=for-the-badge)
+
 # Mechanics_of_Composites_Term_Project
 
 This Project is developed for Term Project Submission for Course ME60408 Mechanics of Composites and can be further used as part testing of laminates.
